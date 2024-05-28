@@ -11,12 +11,30 @@ on:
 jobs:
   # This workflow contains a single job called "build"
   build:
-    if: github.actor == 'harshil-p-7span' || github.actor == 'amit-7Span'
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
+    env:
+      ALLOWED_USERS: ${{ secrets.ALLOWED_USERS }}
+
+    steps:
+      - name: Check if actor is allowed
+        run: |
+          allowed_users="${{ env.ALLOWED_USERS }}"
+          IFS=',' read -ra USERS <<< "$allowed_users"
+          actor="${{ github.actor }}"
+          is_allowed=false
+          for user in "${USERS[@]}"; do
+            if [[ "$user" == "$actor" ]]; then
+              is_allowed=true
+              break
+            fi
+          done
+          if [[ "$is_allowed" == "false" ]]; then
+            echo "User $actor is not allowed to run this job."
+            exit 1
+          fi
 
     # Steps represent a sequence of tasks that will be executed as part of the job
-    steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
 
